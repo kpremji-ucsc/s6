@@ -6,7 +6,7 @@ import tileUrl from "./assets/tile.svg?no-inline";
 const app = document.querySelector<HTMLElement>("#app")!;
 
 const heading = document.createElement("h1");
-heading.textContent = "D1 project";
+heading.textContent = "Mushroom Grove";
 
 const image = document.createElement("img");
 image.src = tileUrl;
@@ -15,42 +15,72 @@ image.width = 96;
 image.height = 96;
 
 const counterText = document.createElement("p");
-counterText.textContent = "0 spores";
-
 const growthText = document.createElement("p");
-growthText.textContent = "Natural growth: 1 spore per second";
 
 let spores = 0;
-let growthPerSecond = 1;
+
+// Each upgrade adds its own production; owning several stacks linearly.
+const compostOwned = { count: 0, growthPerSecond: 1, cost: 50 };
+const rainToadsOwned = { count: 0, growthPerSecond: 5, cost: 300 };
+
+function sporeRate() {
+  return (
+    1 +
+    compostOwned.count * compostOwned.growthPerSecond +
+    rainToadsOwned.count * rainToadsOwned.growthPerSecond
+  );
+}
+
+function render() {
+  counterText.textContent = `${Math.floor(spores)} spores`;
+  growthText.textContent = `Growth: ${sporeRate()} spores per second`;
+}
 
 const clickButton = document.createElement("button");
-clickButton.textContent = "Click me";
+clickButton.textContent = "Release spores";
 clickButton.addEventListener("click", () => {
   spores += 1;
-  counterText.textContent = `${spores} spores`;
+  render();
 });
 
 const buyCompostButton = document.createElement("button");
-buyCompostButton.textContent = "Buy Compost (50 spores)";
+buyCompostButton.textContent = "Buy Compost (50 spores) — 0 owned";
 buyCompostButton.disabled = true;
 buyCompostButton.addEventListener("click", () => {
-  if (spores < 50) return;
-  spores -= 50;
-  growthPerSecond += 1;
-  growthText.textContent = `Natural growth: ${growthPerSecond} spores per second`;
+  if (spores < compostOwned.cost) return;
+  spores -= compostOwned.cost;
+  compostOwned.count += 1;
+  render();
 });
 
-app.append(heading, image, counterText, growthText, clickButton, buyCompostButton);
+const buyRainToadsButton = document.createElement("button");
+buyRainToadsButton.textContent = "Buy Rain Toads (300 spores) — 0 owned";
+buyRainToadsButton.disabled = true;
+buyRainToadsButton.addEventListener("click", () => {
+  if (spores < rainToadsOwned.cost) return;
+  spores -= rainToadsOwned.cost;
+  rainToadsOwned.count += 1;
+  render();
+});
 
-// Drive growth from elapsed time so the rate is the same on a 60Hz and a
-// 144Hz display, and stays smooth instead of jumping once per second.
+app.append(
+  heading,
+  image,
+  counterText,
+  growthText,
+  clickButton,
+  buyCompostButton,
+  buyRainToadsButton,
+);
+
 let lastFrameTime = performance.now();
 function tick(now: number) {
   const elapsedSeconds = (now - lastFrameTime) / 1000;
   lastFrameTime = now;
-  spores += growthPerSecond * elapsedSeconds;
-  counterText.textContent = `${Math.floor(spores)} spores`;
-  buyCompostButton.disabled = spores < 50;
+  spores += sporeRate() * elapsedSeconds;
+  buyCompostButton.disabled = spores < compostOwned.cost;
+  buyRainToadsButton.disabled = spores < rainToadsOwned.cost;
+  render();
   requestAnimationFrame(tick);
 }
 requestAnimationFrame(tick);
