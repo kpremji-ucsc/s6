@@ -52,6 +52,15 @@ const upgrades: Upgrade[] = [
     description:
       "Amphibians that summon drizzle, watering the grove. +5 spores/s each.",
   },
+  {
+    count: 0,
+    baseCost: 1500,
+    costMultiplier: 1.7,
+    growthPerSecond: 20,
+    label: "Mossy Log",
+    description:
+      "A fallen nurse log where new colonies take root. +20 spores/s each.",
+  },
 ];
 
 function costOf(upgrade: Upgrade) {
