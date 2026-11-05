@@ -30,6 +30,18 @@ clickButton.addEventListener("click", () => {
   counterText.textContent = `${spores} spores`;
 });
 
+const buyCompostButton = document.createElement("button");
+buyCompostButton.textContent = "Buy Compost (50 spores)";
+buyCompostButton.disabled = true;
+buyCompostButton.addEventListener("click", () => {
+  if (spores < 50) return;
+  spores -= 50;
+  growthPerSecond += 1;
+  growthText.textContent = `Natural growth: ${growthPerSecond} spores per second`;
+});
+
+app.append(heading, image, counterText, growthText, clickButton, buyCompostButton);
+
 // Drive growth from elapsed time so the rate is the same on a 60Hz and a
 // 144Hz display, and stays smooth instead of jumping once per second.
 let lastFrameTime = performance.now();
@@ -38,8 +50,7 @@ function tick(now: number) {
   lastFrameTime = now;
   spores += growthPerSecond * elapsedSeconds;
   counterText.textContent = `${Math.floor(spores)} spores`;
+  buyCompostButton.disabled = spores < 50;
   requestAnimationFrame(tick);
 }
 requestAnimationFrame(tick);
-
-app.append(heading, image, counterText, growthText, clickButton);
