@@ -19,16 +19,25 @@ const growthText = document.createElement("p");
 
 let spores = 0;
 
-// Each upgrade adds its own production; owning several stacks linearly.
-const compostOwned = { count: 0, growthPerSecond: 1, cost: 50 };
-const rainToadsOwned = { count: 0, growthPerSecond: 5, cost: 300 };
+// Prices rise with every purchase: baseCost * costMultiplier ^ count.
+// With a 1.5x multiplier, the 3rd compost costs ~112 spores and the 10th
+// costs ~3844, so idle play alone can't race through the whole tree.
+const compostOwned = { count: 0, baseCost: 50, costMultiplier: 1.5, growthPerSecond: 1 };
+const rainToadsOwned = { count: 0, baseCost: 300, costMultiplier: 1.6, growthPerSecond: 5 };
+
+type Upgrade = {
+  count: number;
+  baseCost: number;
+  costMultiplier: number;
+  growthPerSecond: number;
+};
+
+function costOf(upgrade: Upgrade) {
+  return Math.round(upgrade.baseCost * upgrade.costMultiplier ** upgrade.count);
+}
 
 function sporeRate() {
-  return (
-    1 +
-    compostOwned.count * compostOwned.growthPerSecond +
-    rainToadsOwned.count * rainToadsOwned.growthPerSecond
-  );
+  return 1 + compostOwned.growthPerSecond * compostOwned.count + rainToadsOwned.growthPerSecond * rainToadsOwned.count;
 }
 
 function render() {
@@ -43,25 +52,23 @@ clickButton.addEventListener("click", () => {
   render();
 });
 
-const buyCompostButton = document.createElement("button");
-buyCompostButton.textContent = "Buy Compost (50 spores) — 0 owned";
-buyCompostButton.disabled = true;
-buyCompostButton.addEventListener("click", () => {
-  if (spores < compostOwned.cost) return;
-  spores -= compostOwned.cost;
-  compostOwned.count += 1;
-  render();
-});
+function createUpgradeButton(upgrade: Upgrade, label: string) {
+  const button = document.createElement("button");
+  const buy = () => {
+    const price = costOf(upgrade);
+    if (spores < price) return;
+    spores -= price;
+    upgrade.count += 1;
+    button.textContent = `Buy ${label} (${costOf(upgrade)} spores) — ${upgrade.count} owned`;
+    render();
+  };
+  button.textContent = `Buy ${label} (${costOf(upgrade)} spores) — ${upgrade.count} owned`;
+  button.addEventListener("click", buy);
+  return button;
+}
 
-const buyRainToadsButton = document.createElement("button");
-buyRainToadsButton.textContent = "Buy Rain Toads (300 spores) — 0 owned";
-buyRainToadsButton.disabled = true;
-buyRainToadsButton.addEventListener("click", () => {
-  if (spores < rainToadsOwned.cost) return;
-  spores -= rainToadsOwned.cost;
-  rainToadsOwned.count += 1;
-  render();
-});
+const buyCompostButton = createUpgradeButton(compostOwned, "Compost");
+const buyRainToadsButton = createUpgradeButton(rainToadsOwned, "Rain Toads");
 
 app.append(
   heading,
@@ -78,8 +85,8 @@ function tick(now: number) {
   const elapsedSeconds = (now - lastFrameTime) / 1000;
   lastFrameTime = now;
   spores += sporeRate() * elapsedSeconds;
-  buyCompostButton.disabled = spores < compostOwned.cost;
-  buyRainToadsButton.disabled = spores < rainToadsOwned.cost;
+  buyCompostButton.disabled = spores < costOf(compostOwned);
+  buyRainToadsButton.disabled = spores < costOf(rainToadsOwned);
   render();
   requestAnimationFrame(tick);
 }
