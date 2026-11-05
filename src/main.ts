@@ -87,7 +87,9 @@ clickButton.addEventListener("click", () => {
 function createUpgradeButton(upgrade: Upgrade) {
   const button = document.createElement("button");
   const updateText = () => {
-    button.textContent = `Buy ${upgrade.label} (${costOf(upgrade)} spores) — ${upgrade.count} owned`;
+    button.textContent = `Buy ${upgrade.label} (${
+      costOf(upgrade)
+    } spores) — ${upgrade.count} owned`;
   };
   button.title = upgrade.description;
   updateText();
