@@ -22,26 +22,9 @@ const growthText = document.createElement("p");
 
 let spores = 0;
 
-// Prices rise with every purchase: baseCost * costMultiplier ^ count.
-// With a 1.5x multiplier, the 3rd compost costs ~112 spores and the 10th
-// costs ~3844, so idle play alone can't race through the whole tree.
-const compostOwned = {
-  count: 0,
-  baseCost: 50,
-  costMultiplier: 1.5,
-  growthPerSecond: 1,
-  label: "Compost",
-  description: "Nutrient soil that feeds the mycelium. +1 spore/s each.",
-};
-const rainToadsOwned = {
-  count: 0,
-  baseCost: 300,
-  costMultiplier: 1.6,
-  growthPerSecond: 5,
-  label: "Rain Toads",
-  description: "Amphibians that summon drizzle, watering the grove. +5 spores/s each.",
-};
-
+// One data-driven model: every upgrade differs only by these fields, and a
+// single createUpgradeButton implementation handles all of them. Adding a
+// third upgrade becomes a data entry, not a code copy.
 type Upgrade = {
   count: number;
   baseCost: number;
@@ -51,16 +34,32 @@ type Upgrade = {
   description: string;
 };
 
+const upgrades: Upgrade[] = [
+  {
+    count: 0,
+    baseCost: 50,
+    costMultiplier: 1.5,
+    growthPerSecond: 1,
+    label: "Compost",
+    description: "Nutrient soil that feeds the mycelium. +1 spore/s each.",
+  },
+  {
+    count: 0,
+    baseCost: 300,
+    costMultiplier: 1.6,
+    growthPerSecond: 5,
+    label: "Rain Toads",
+    description:
+      "Amphibians that summon drizzle, watering the grove. +5 spores/s each.",
+  },
+];
+
 function costOf(upgrade: Upgrade) {
   return Math.round(upgrade.baseCost * upgrade.costMultiplier ** upgrade.count);
 }
 
 function sporeRate() {
-  return (
-    1 +
-    compostOwned.growthPerSecond * compostOwned.count +
-    rainToadsOwned.growthPerSecond * rainToadsOwned.count
-  );
+  return upgrades.reduce((sum, u) => sum + u.growthPerSecond * u.count, 1);
 }
 
 function render() {
@@ -94,9 +93,7 @@ function createUpgradeButton(upgrade: Upgrade) {
   return button;
 }
 
-const buyCompostButton = createUpgradeButton(compostOwned);
-const buyRainToadsButton = createUpgradeButton(rainToadsOwned);
-
+const upgradeButtons = upgrades.map(createUpgradeButton);
 app.append(
   heading,
   subtitle,
@@ -104,8 +101,7 @@ app.append(
   counterText,
   growthText,
   clickButton,
-  buyCompostButton,
-  buyRainToadsButton,
+  ...upgradeButtons,
 );
 
 let lastFrameTime = performance.now();
@@ -113,8 +109,9 @@ function tick(now: number) {
   const elapsedSeconds = (now - lastFrameTime) / 1000;
   lastFrameTime = now;
   spores += sporeRate() * elapsedSeconds;
-  buyCompostButton.disabled = spores < costOf(compostOwned);
-  buyRainToadsButton.disabled = spores < costOf(rainToadsOwned);
+  upgrades.forEach((upgrade, i) => {
+    upgradeButtons[i].disabled = spores < costOf(upgrade);
+  });
   render();
   requestAnimationFrame(tick);
 }
