@@ -14,13 +14,16 @@ image.alt = "A teal tile with a cream circle";
 image.width = 96;
 image.height = 96;
 
-const message = document.createElement("p");
-message.textContent = "Your project starts here.";
+const counterText = document.createElement("p");
+counterText.textContent = "0 spores";
+
+let spores = 0;
 
 const clickButton = document.createElement("button");
 clickButton.textContent = "Click me";
 clickButton.addEventListener("click", () => {
-  console.log("Button clicked!");
+  spores += 1;
+  counterText.textContent = `${spores} spores`;
 });
 
-app.append(heading, image, message, clickButton);
+app.append(heading, image, counterText, clickButton);
